@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "appId": null,
+  "appDisplayName": "Code App React",
+  "region": "prod",
+  "appType": "CodeApp",
+  "environmentId": "",
+  "description": "Visualização e gerenciamento de navios com React.",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://127.0.0.1:5173/",
+  "logoPath": "Default",
+  "connectionReferences": {},
+  "databaseReferences": {}
+}
