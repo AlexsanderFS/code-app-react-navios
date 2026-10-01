@@ -25,7 +25,7 @@ export default defineConfig({
     reducedMotion: 'reduce',
   },
   projects: [
-    { name: 'service-contract', testMatch: '**/ship-service.spec.ts' },
+    { name: 'service-contract', testMatch: ['**/*ship-service.spec.ts', '**/session-user-service.spec.ts'] },
     ...viewports.map(({ name, width, height }) => ({
       name,
       testMatch: '**/ships-ui.spec.ts',
@@ -33,7 +33,7 @@ export default defineConfig({
     })),
   ],
   webServer: developmentUrl ? undefined : {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
+    command: 'npm run preview -- --outDir dist-e2e --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://127.0.0.1:4173',
     timeout: 30000,
     reuseExistingServer: false,

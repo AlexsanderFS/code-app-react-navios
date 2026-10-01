@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { useShips } from '../context/ShipsContext'
 import { formatCoordinate } from '../domain/shipValidation'
 import { Icon } from '../components/Icon'
-import type { Ship } from '../types/ship'
+import { hasValidPosition, type PositionedShip } from '../types/ship'
 
 const brazilBounds: LatLngBoundsExpression = [[-34, -74], [6, -28]]
 const shipIcon = divIcon({
@@ -14,7 +14,7 @@ const shipIcon = divIcon({
   iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20], tooltipAnchor: [0, 0],
 })
 
-function MapControls({ ships, onTileError }: { ships: Ship[]; onTileError: (failed: boolean) => void }) {
+function MapControls({ ships, onTileError }: { ships: PositionedShip[]; onTileError: (failed: boolean) => void }) {
   const map = useMap()
   const [zoom, setZoom] = useState(map.getZoom())
   const controls = useRef<HTMLDivElement>(null)
@@ -47,7 +47,7 @@ function MapControls({ ships, onTileError }: { ships: Ship[]; onTileError: (fail
   </>
 }
 
-function ShipMarker({ ship, selected, selectionVersion, onSelect }: { ship: Ship; selected: boolean; selectionVersion: number; onSelect: () => void }) {
+function ShipMarker({ ship, selected, selectionVersion, onSelect }: { ship: PositionedShip; selected: boolean; selectionVersion: number; onSelect: () => void }) {
   const map = useMap()
   const marker = useRef<LeafletMarker>(null)
   useEffect(() => {
@@ -66,7 +66,9 @@ function ShipMarker({ ship, selected, selectionVersion, onSelect }: { ship: Ship
 }
 
 export default function MapPage() {
-  const { ships, loading } = useShips()
+  const { ships, loading, error, reload } = useShips()
+  const activeShips = ships.filter(ship => ship.stateCode === 0)
+  const positionedShips = activeShips.filter(hasValidPosition)
   const [selection, setSelection] = useState<{ id: string; version: number } | null>(null)
   const selectedId = selection?.id
   function selectShip(id: string) { setSelection(current => ({ id, version: (current?.version ?? 0) + 1 })) }
@@ -74,27 +76,27 @@ export default function MapPage() {
   return <>
     <div className="page-heading">
       <div><h2>Mapa da frota</h2><p className="muted">Seu ponto de vista sobre o litoral brasileiro.</p></div>
-      <span className="fleet-count"><Icon name="ship" size={18} /><strong>{ships.length}</strong> {ships.length === 1 ? 'navio' : 'navios'}</span>
+      <div className="page-actions"><button className="button secondary" onClick={() => void reload()} disabled={loading}>Atualizar lista</button><span className="fleet-count"><Icon name="ship" size={18} /><strong>{activeShips.length}</strong> {activeShips.length === 1 ? 'ativo' : 'ativos'}</span></div>
     </div>
     <div className="map-workspace">
       <section className="map-section panel" aria-label="Mapa de navios">
-        <div className="map-topbar"><span><span className="status-dot" />Brasil e litoral brasileiro</span><span>POSIÇÕES FICTÍCIAS</span></div>
+        <div className="map-topbar"><span><span className="status-dot" />Brasil e litoral brasileiro</span><span>POSIÇÕES CADASTRADAS</span></div>
         <div className="map-canvas">
           <MapContainer bounds={brazilBounds} className="fleet-map" zoomControl={false} minZoom={2} maxZoom={19} scrollWheelZoom>
-            <MapControls ships={ships} onTileError={setTileError} />
-            {ships.map(ship => <ShipMarker key={ship.id} ship={ship} selected={selectedId === ship.id} selectionVersion={selection?.version ?? 0} onSelect={() => selectShip(ship.id)} />)}
+            <MapControls ships={positionedShips} onTileError={setTileError} />
+            {positionedShips.map(ship => <ShipMarker key={ship.id} ship={ship} selected={selectedId === ship.id} selectionVersion={selection?.version ?? 0} onSelect={() => selectShip(ship.id)} />)}
           </MapContainer>
           {tileError ? <div className="tile-warning" role="status">Não foi possível carregar parte do mapa. Verifique sua conexão. Os dados dos navios continuam disponíveis na lista.</div> : null}
         </div>
-        <div className="map-caption"><span><span className="legend-dot" />Navios cadastrados</span><span>Arraste para navegar · Use + e − para aproximar</span></div>
+        <div className="map-caption"><span><span className="legend-dot" />Navios ativos</span><span>Arraste para navegar · Use + e − para aproximar</span></div>
       </section>
       <section className="fleet-overview" aria-labelledby="fleet-title">
-        <div className="section-heading"><h3 id="fleet-title">Na sua frota</h3><span className="muted">Selecione para localizar no mapa</span></div>
-        {loading ? <p className="muted" role="status">Carregando navios…</p> : ships.length === 0 ? <div className="panel empty-state"><Icon name="ship" size={28} /><h3>Sua frota começa aqui</h3><p className="muted">Abra Navios no menu para cadastrar o primeiro navio.</p></div> :
-          <div className="fleet-cards">{ships.map(ship => <button key={ship.id} className={selectedId === ship.id ? 'fleet-card selected' : 'fleet-card'} aria-label={'Localizar ' + ship.name} aria-pressed={selectedId === ship.id} onClick={() => {
+        <div className="section-heading"><h3 id="fleet-title">Ativos na sua frota</h3><span className="muted">Selecione para localizar no mapa</span></div>
+        {loading ? <p className="muted" role="status">Carregando navios…</p> : error ? <p className="muted" role="status">Não foi possível atualizar a frota.</p> : ships.length === 0 ? <div className="panel empty-state"><Icon name="ship" size={28} /><h3>Sua frota começa aqui</h3><p className="muted">Abra Navios no menu para cadastrar o primeiro navio.</p></div> : activeShips.length === 0 ? <div className="panel empty-state"><Icon name="ship" size={28} /><h3>Nenhum navio ativo</h3><p className="muted">Abra Navios no menu para reativar um navio da sua frota.</p></div> :
+          <div className="fleet-cards">{activeShips.map(ship => <button key={ship.id} className={selectedId === ship.id ? 'fleet-card selected' : 'fleet-card'} disabled={!hasValidPosition(ship)} aria-label={hasValidPosition(ship) ? 'Localizar ' + ship.name : ship.name + ' sem posição válida'} aria-pressed={selectedId === ship.id} onClick={() => {
             selectShip(ship.id)
             document.querySelector('.map-section')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' })
-          }}><span className="card-icon"><Icon name="ship" /></span><div><strong>{ship.name}</strong><div className="fleet-coordinates"><span className="fleet-coordinate"><small>Latitude</small><span>{formatCoordinate(ship.latitude)}</span></span><span className="fleet-coordinate"><small>Longitude</small><span>{formatCoordinate(ship.longitude)}</span></span></div></div><Icon name="arrow" size={18} /></button>)}</div>}
+          }}><span className="card-icon"><Icon name="ship" /></span><div><strong>{ship.name}</strong>{!hasValidPosition(ship) ? <p className="muted">Complete as coordenadas em Navios para localizar no mapa.</p> : null}<div className="fleet-coordinates"><span className="fleet-coordinate"><small>Latitude</small><span>{formatCoordinate(ship.latitude)}</span></span><span className="fleet-coordinate"><small>Longitude</small><span>{formatCoordinate(ship.longitude)}</span></span></div></div><Icon name="arrow" size={18} /></button>)}</div>}
       </section>
     </div>
   </>

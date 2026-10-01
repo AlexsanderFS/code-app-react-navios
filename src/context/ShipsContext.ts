@@ -1,4 +1,4 @@
-﻿import { createContext, useContext } from 'react'
+import { createContext, useContext } from 'react'
 import type { Ship, ShipInput } from '../types/ship'
 
 interface ShipsState {
@@ -8,6 +8,7 @@ interface ShipsState {
   reload: () => Promise<void>
   create: (input: ShipInput) => Promise<Ship>
   update: (id: string, input: ShipInput) => Promise<Ship>
+  setState: (id: string, stateCode: Ship['stateCode']) => Promise<Ship>
   remove: (id: string) => Promise<void>
 }
 

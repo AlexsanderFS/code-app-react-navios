@@ -1,7 +1,9 @@
-﻿import type { CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 
-export type IconName = 'ship' | 'map' | 'menu' | 'close' | 'sun' | 'moon' | 'plus' | 'edit' | 'trash' | 'focus' | 'arrow' | 'anchor'
+export type IconName = 'ship' | 'map' | 'menu' | 'close' | 'sun' | 'moon' | 'plus' | 'edit' | 'trash' | 'focus' | 'arrow' | 'anchor' | 'user' | 'power'
 const paths: Record<IconName, string> = {
+  user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2',
+  power: 'M12 2v10 M6.3 5.3a9 9 0 1 0 11.4 0',
   ship: 'M12 3v5 M8 8V5h8v3 M5 13V8h14v5 M3 14l9-4 9 4-3 6H6z M2 21q2-2 4 0t4 0t4 0t4 0t4 0',
   map: 'M9 4L3 6v15l6-2 6 2 6-2V4l-6 2z M9 4v15 M15 6v15',
   menu: 'M4 6h16 M4 12h16 M4 18h16',

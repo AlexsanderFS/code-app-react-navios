@@ -1,6 +1,8 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { Icon } from './Icon'
+import { SessionUserMenu } from './SessionUserMenu'
+import type { SessionUserService } from '../services/sessionUserService'
 
 export type View = 'map' | 'ships'
 
@@ -16,7 +18,7 @@ function Navigation({ view, onNavigate }: { view: View; onNavigate: (view: View)
   </nav>
 }
 
-export function AppLayout({ view, onNavigate, children }: { view: View; onNavigate: (view: View) => void; children: ReactNode }) {
+export function AppLayout({ view, onNavigate, children, sessionService }: { sessionService: SessionUserService; view: View; onNavigate: (view: View) => void; children: ReactNode }) {
   const { theme, toggleTheme } = useTheme()
   const drawer = useRef<HTMLDialogElement>(null)
   const content = useRef<HTMLElement>(null)
@@ -39,7 +41,7 @@ export function AppLayout({ view, onNavigate, children }: { view: View; onNaviga
         <span className="brand-icon"><Icon name="ship" size={25} /></span>
         <div><h1>Navios</h1><span className="brand-subtitle">GESTÃO MARÍTIMA</span></div>
       </div>
-      <div className="header-meta"><span className="demo-pill"><span />Dados de demonstração</span><span className="app-version">v1.1.0</span></div>
+      <div className="header-meta"><span className="demo-pill"><span />{import.meta.env.MODE === 'test' ? 'Dados de teste' : 'Dados salvos'}</span><span className="app-version">v1.3.0</span><SessionUserMenu service={sessionService} /></div>
     </header>
     <aside className="desktop-sidebar">
       <Navigation view={view} onNavigate={navigate} />

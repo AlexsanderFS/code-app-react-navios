@@ -8,7 +8,7 @@
   "description": "Visualização e gerenciamento de navios com React.",
   "buildPath": "./dist",
   "buildEntryPoint": "index.html",
-  "localAppUrl": "http://127.0.0.1:5173/",
+  "localAppUrl": "http://localhost:5173/",
   "logoPath": "Default",
   "connectionReferences": {},
   "databaseReferences": {}

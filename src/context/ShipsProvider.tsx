@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { ShipsContext } from './ShipsContext'
 import type { ShipService } from '../services/shipService'
 import type { Ship, ShipInput } from '../types/ship'
@@ -35,10 +35,15 @@ export function ShipsProvider({ service, children }: { service: ShipService; chi
     setShips(current => current.map(currentShip => currentShip.id === id ? ship : currentShip))
     return ship
   }
+  const setState = async (id: string, stateCode: Ship['stateCode']) => {
+    const ship = await service.setState(id, stateCode)
+    setShips(current => current.map(currentShip => currentShip.id === id ? ship : currentShip))
+    return ship
+  }
   const remove = async (id: string) => {
     await service.remove(id)
     setShips(current => current.filter(ship => ship.id !== id))
   }
-  return <ShipsContext.Provider value={{ ships, loading, error, reload, create, update, remove }}>{children}</ShipsContext.Provider>
+  return <ShipsContext.Provider value={{ ships, loading, error, reload, create, update, setState, remove }}>{children}</ShipsContext.Provider>
 }
 

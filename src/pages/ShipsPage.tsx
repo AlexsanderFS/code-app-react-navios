@@ -7,12 +7,26 @@ import { formatCoordinate } from '../domain/shipValidation'
 import type { Ship } from '../types/ship'
 
 export default function ShipsPage() {
-  const { ships, loading, create, update, remove } = useShips()
+  const { ships, loading, error, reload, create, update, setState, remove } = useShips()
   const [form, setForm] = useState<{ ship?: Ship } | null>(null)
   const [toDelete, setToDelete] = useState<Ship | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const [changingState, setChangingState] = useState<string | null>(null)
+  const [stateError, setStateError] = useState<string | null>(null)
+  async function toggleState(ship: Ship) {
+    if (changingState) return
+    setChangingState(ship.id)
+    setStateError(null)
+    setNotice('')
+    try {
+      await setState(ship.id, ship.stateCode === 0 ? 1 : 0)
+      setNotice(ship.name + (ship.stateCode === 0 ? ' foi desativado e removido do mapa.' : ' foi ativado.'))
+    } catch (reason) {
+      setStateError(reason instanceof Error ? reason.message : 'Não foi possível alterar o estado do navio. Tente novamente.')
+    } finally { setChangingState(null) }
+  }
   async function confirmDelete() {
     if (!toDelete || deleting) return
     setDeleting(true)
@@ -28,22 +42,23 @@ export default function ShipsPage() {
   return <>
     <div className="page-heading">
       <div><h2>Seus navios</h2><p className="muted">Uma frota organizada começa com bons registros.</p></div>
-      <button className="button primary new-ship-button" onClick={() => { setNotice(''); setForm({}) }} disabled={loading}><Icon name="plus" size={18} />Novo navio</button>
+      <div className="page-actions"><button className="button secondary" onClick={() => { setStateError(null); void reload() }} disabled={loading || changingState !== null}>Atualizar lista</button><button className="button primary new-ship-button" disabled={loading || changingState !== null} onClick={() => { setNotice(''); setForm({}) }} ><Icon name="plus" size={18} />Novo navio</button></div>
     </div>
-    <div className="session-note"><Icon name="ship" size={17} /><span>Dados de demonstração. As alterações ficam nesta sessão e são reiniciadas ao recarregar.</span></div>
+    <div className="session-note"><Icon name="ship" size={17} /><span>Os registros são salvos na sua frota. Atualize a lista para consultar as alterações mais recentes.</span></div>
+    {stateError ? <p className="form-error state-error" role="alert">{stateError}</p> : null}
     {notice ? <div className="notice" role="status">{notice}</div> : null}
     <section className="panel ships-panel" aria-labelledby="registered-ships">
       <div className="list-toolbar"><h3 id="registered-ships">Navios cadastrados</h3><span className="count-badge">{ships.length}</span></div>
-      {loading ? <p className="muted loading-state" role="status">Carregando navios…</p> : ships.length === 0 ?
+      {loading ? <p className="muted loading-state" role="status">Carregando navios…</p> : error ? <p className="muted loading-state">A lista não pôde ser atualizada. Use Tentar novamente para consultar os registros.</p> : ships.length === 0 ?
         <div className="empty-state"><Icon name="ship" size={34} /><h3>Nenhum navio cadastrado</h3><p className="muted">Cadastre seu primeiro navio para vê-lo no mapa.</p><button className="button primary" onClick={() => setForm({})}><Icon name="plus" size={18} />Novo navio</button></div> :
         <table className="ships-table" role="table">
-          <caption className="sr-only">Navios cadastrados, suas posições e ações de edição e exclusão</caption>
+          <caption className="sr-only">Navios cadastrados, suas posições, estado e ações de edição, ativação, desativação e exclusão</caption>
           <thead role="rowgroup"><tr role="row"><th scope="col">Navio</th><th scope="col">Latitude</th><th scope="col">Longitude</th><th scope="col">Ações</th></tr></thead>
           <tbody role="rowgroup">{ships.map(ship => <tr key={ship.id} role="row">
-            <td role="cell" className="ship-name-cell"><span className="card-icon"><Icon name="ship" size={19} /></span><strong>{ship.name}</strong></td>
+            <td role="cell" className="ship-name-cell"><span className="card-icon"><Icon name="ship" size={19} /></span><span className="ship-details"><strong>{ship.name}</strong><span className={ship.stateCode === 0 ? "ship-status active" : "ship-status"}>{ship.stateCode === 0 ? "Ativo" : "Desativado"}</span></span></td>
             <td role="cell" className="coordinate-cell" data-label="Latitude"><span>{formatCoordinate(ship.latitude)}</span></td>
             <td role="cell" className="coordinate-cell" data-label="Longitude"><span>{formatCoordinate(ship.longitude)}</span></td>
-            <td role="cell" className="ship-actions"><button className="row-action" aria-label={'Editar ' + ship.name} onClick={() => { setNotice(''); setForm({ ship }) }}><Icon name="edit" size={16} /><span>Editar</span></button><button className="row-action delete-action" aria-label={'Excluir ' + ship.name} onClick={() => { setDeleteError(null); setToDelete(ship) }}><Icon name="trash" size={16} /><span>Excluir</span></button></td>
+            <td role="cell" className="ship-actions"><button className="row-action state-action" aria-label={(ship.stateCode === 0 ? "Desativar " : "Ativar ") + ship.name} disabled={loading || changingState !== null} onClick={() => void toggleState(ship)}><Icon name="power" size={16} /><span>{changingState === ship.id ? "Salvando…" : ship.stateCode === 0 ? "Desativar" : "Ativar"}</span></button><button className="row-action" aria-label={'Editar ' + ship.name} disabled={loading || changingState !== null} onClick={() => { setNotice(''); setForm({ ship }) }}><Icon name="edit" size={16} /><span>Editar</span></button><button className="row-action delete-action" aria-label={'Excluir ' + ship.name} disabled={loading || changingState !== null} onClick={() => { setDeleteError(null); setToDelete(ship) }}><Icon name="trash" size={16} /><span>Excluir</span></button></td>
           </tr>)}</tbody>
         </table>}
     </section>

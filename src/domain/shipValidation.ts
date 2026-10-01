@@ -1,4 +1,4 @@
-﻿import type { ShipInput } from '../types/ship'
+import type { ShipInput } from '../types/ship'
 
 export type ShipErrors = Partial<Record<keyof ShipInput, string>>
 export function validateShip(input: ShipInput): ShipErrors {
@@ -22,7 +22,8 @@ export function parseCoordinate(value: string): number {
   return /^[-+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(trimmed) ? Number(trimmed.replace(',', '.')) : NaN
 }
 
-export function formatCoordinate(value: number): string {
+export function formatCoordinate(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return 'Não informada'
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 6 })
 }
 

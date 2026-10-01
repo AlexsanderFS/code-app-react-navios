@@ -2,6 +2,7 @@
 node_modules/
 dist/
 dist-ssr/
+dist-e2e/
 test-results/
 playwright-report/
 diagnostics/
@@ -40,3 +41,9 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Metadados brutos do Dataverse: contêm IDs internos; runtime usa appschemas
+/.power/schemas/dataverse/
+
+# Esquema bruto do conector; runtime usa appschemas
+/.power/schemas/office365users/
